@@ -2,6 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+// Date Picker code
+//  onTap: () async {
+//                     DateTime? date = await showDatePicker(
+//                       context: context,
+//                       initialDate: DateTime.now(),
+//                       firstDate: DateTime.now(),
+//                       lastDate: DateTime(2050),
+//                       currentDate: DateTime.now(),
+//                       initialEntryMode: DatePickerEntryMode.calendar,
+//                       initialDatePickerMode: DatePickerMode.day,
+//                       builder: (context, child) {
+//                         return Theme(
+//                           data: Theme.of(context).copyWith(
+//                             colorScheme: ColorScheme.fromSwatch(
+//                               primarySwatch: Colors.blueGrey,
+//                               accentColor: Colors.black,
+//                               backgroundColor: Colors.lightBlue,
+//                               cardColor: Colors.white,
+//                             ),
+//                           ),
+//                           child: child!,
+//                         );
+//                       },
+//                     );
+//                     if (date != null) {
+//                       setState(() {
+//                         _selectedDate = date;
+//                       });
+//                     }
+//                   },//
+
+
 class Page1 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -222,35 +254,7 @@ class _HomePageState extends State<HomePage> {
                   key: Key('$index'), // Add a key to identify the ListTile
                   title: Text(_classes1[index]),
                   leading: Icon(Icons.book),
-                  onTap: () async {
-                    DateTime? date = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(2050),
-                      currentDate: DateTime.now(),
-                      initialEntryMode: DatePickerEntryMode.calendar,
-                      initialDatePickerMode: DatePickerMode.day,
-                      builder: (context, child) {
-                        return Theme(
-                          data: Theme.of(context).copyWith(
-                            colorScheme: ColorScheme.fromSwatch(
-                              primarySwatch: Colors.blueGrey,
-                              accentColor: Colors.black,
-                              backgroundColor: Colors.lightBlue,
-                              cardColor: Colors.white,
-                            ),
-                          ),
-                          child: child!,
-                        );
-                      },
-                    );
-                    if (date != null) {
-                      setState(() {
-                        _selectedDate = date;
-                      });
-                    }
-                  },
+                  onTap: () {},
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[

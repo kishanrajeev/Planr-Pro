@@ -7,7 +7,7 @@ class DrawerContent extends StatefulWidget {
 }
 
 class _DrawerContentState extends State<DrawerContent> {
-  bool _showImage = false;
+  bool _showImage = true;
 
   @override
   Widget build(BuildContext context) {
@@ -66,8 +66,8 @@ class _DrawerContentState extends State<DrawerContent> {
                     child: _showImage
                         ? Image.asset(
                       'assets/images/planrpro_icon.png',
-                      height: 70,
-                      width: 70,
+                      height: 140,
+                      width: 140,
                       fit: BoxFit.cover,
                     )
                         : Container(),
