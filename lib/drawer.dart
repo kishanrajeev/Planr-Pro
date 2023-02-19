@@ -73,7 +73,7 @@ class _DrawerContentState extends State<DrawerContent> {
                         : Container(),
                   ),
                   SizedBox(
-                    height: 230,
+                    height: 280,
                   ),
                   Container(
                     height: 1,
