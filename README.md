@@ -1,16 +1,31 @@
-# final_planner
+# Planr Pro
 
-A new Flutter project.
+A Multi Use Task Planning App Developed in Flutter.
 
-## Getting Started
+## Status and Images
 
-This project is a starting point for a Flutter application.
+This project is being actively developed and maintained by Kishan Rajeev.
 
-A few resources to get you started if this is your first Flutter project:
+#### Flutter App Screenshots
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+<table>
+  <tr>
+    <td>Drawer with image(Default)</td>
+     <td>Drawer without image</td>
+  </tr>
+  <tr>
+    <td><img src="https://user-images.githubusercontent.com/125786083/219973507-4477826f-9ec6-48d9-8a27-64f413f22903.jpg" width=270 height=580></td>
+    <td><img src="https://user-images.githubusercontent.com/125786083/219973505-3f34ebb3-3d0e-48c6-80dc-c01956e97d45.jpg" width=270 height=580></td>
+  </tr>
+ </table>
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+<table>
+  <tr>
+    <td>Main Planning Pages(Default)</td>
+     <td>Gallery</td>
+  </tr>
+  <tr>
+    <td><img src="https://user-images.githubusercontent.com/125786083/219973502-2eaa380f-522c-42c5-bd8c-607db9546f0b.jpg" width=270 height=580></td>
+    <td><img src="https://user-images.githubusercontent.com/125786083/219973501-3c823b22-b343-4291-875e-9006a16f0252.jpg" width=270 height=580></td>
+  </tr>
+ </table>
