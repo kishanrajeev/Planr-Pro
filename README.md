@@ -8,7 +8,8 @@ A Multi Use Task Planning App Developed in Flutter.
 * Adjust Task placement.
 * Delete tasks.
 * Randomize tasks.
-* 3 different kinds of task pages.
+* Take pictures to remember certain tasks.
+* 3 different task pages.
 
 ## Getting Started
 
