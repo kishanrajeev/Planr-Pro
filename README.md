@@ -2,12 +2,22 @@
 
 A Multi Use Task Planning App Developed in Flutter.
 
-## Status and Images
+## Features
 
-This project is being actively developed and maintained by Kishan Rajeev.
+* Create tasks.
+* Adjust Task placement.
+* Delete tasks.
+* Randomize tasks.
+* 3 different kinds of task pages.
 
-#### Flutter App Screenshots
+## Getting Started
 
+1. Install the Flutter SDK.
+2. Clone the Planr Pro repository.
+3. Open the project in your favorite IDE.
+4. Run the app on your device or emulator.
+
+## Screenshots
 <table>
   <tr>
     <td>Drawer with image(Default)</td>
@@ -29,3 +39,11 @@ This project is being actively developed and maintained by Kishan Rajeev.
     <td><img src="https://user-images.githubusercontent.com/125786083/219973501-3c823b22-b343-4291-875e-9006a16f0252.jpg" width=270 height=580></td>
   </tr>
  </table>
+
+## Contact
+
+* [Kishan Rajeev](https://kishan.knowledgeplatter.com/)
+
+## License
+
+Planr Pro is licensed under the MIT License.
