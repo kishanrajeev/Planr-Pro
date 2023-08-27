@@ -1,37 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-
-// Date Picker code
-//  onTap: () async {
-//                     DateTime? date = await showDatePicker(
-//                       context: context,
-//                       initialDate: DateTime.now(),
-//                       firstDate: DateTime.now(),
-//                       lastDate: DateTime(2050),
-//                       currentDate: DateTime.now(),
-//                       initialEntryMode: DatePickerEntryMode.calendar,
-//                       initialDatePickerMode: DatePickerMode.day,
-//                       builder: (context, child) {
-//                         return Theme(
-//                           data: Theme.of(context).copyWith(
-//                             colorScheme: ColorScheme.fromSwatch(
-//                               primarySwatch: Colors.blueGrey,
-//                               accentColor: Colors.black,
-//                               backgroundColor: Colors.lightBlue,
-//                               cardColor: Colors.white,
-//                             ),
-//                           ),
-//                           child: child!,
-//                         );
-//                       },
-//                     );
-//                     if (date != null) {
-//                       setState(() {
-//                         _selectedDate = date;
-//                       });
-//                     }
-//                   },//
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:uuid/uuid.dart';
+import 'package:flutter/foundation.dart';
 
 
 class Page1 extends StatelessWidget {
@@ -52,13 +25,24 @@ class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
-class Class {
+
+class Assignment {
+  String id;
   String title;
   DateTime date;
-  Class({required this.title, required this.date});
-}
+  TimeOfDay time;
+  DateTime selectedDate; // New field
+  TimeOfDay selectedTime; // New field
 
-List<Class> _classes1 = [];
+  Assignment({
+    required this.title,
+    required this.date,
+    required this.time,
+    required this.selectedDate,
+    required this.selectedTime,
+    String? id,
+  }) : this.id = id ?? Uuid().v4();
+}
 
 
 class ClassDetails extends StatefulWidget {
@@ -100,45 +84,155 @@ class _ClassDetailsState extends State<ClassDetails> {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<String> _classes1 = [];
+  List<Assignment> _assignments = [];
   DateTime _selectedDate = DateTime.now();
-  final _classController = TextEditingController();
+  TimeOfDay _selectedTime = TimeOfDay.now(); // Added selected time
+  final _assignmentController = TextEditingController();
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
 
-  void _shuffleClasses() {
-    setState(() {
-      _classes1.shuffle();
-    });
-    _saveclasses1();
+  @override
+  void initState() {
+    super.initState();
+    _loadAssignments();
+    initializeNotifications();
   }
 
-  void _addClass() {
-    if (_classes1.length < 100) {
-      setState(() {
-        _classes1.add(_classController.text);
-      });
-      _saveclasses1();
+  void initializeNotifications() async {
+    var initializationSettingsAndroid =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+    var initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+    // Initialize time zone
+    tz.initializeTimeZones();
+  }
+
+  Future<void> scheduleNotification(
+      String id,
+      String title,
+      DateTime date,
+      TimeOfDay time,
+      ) async {
+    print("Scheduling notification for: $title at $date $time");
+
+    DateTime scheduledDateTime = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+
+    // Calculate the current date and time in the user's local timezone
+    DateTime now = tz.TZDateTime.now(tz.local);
+
+    // Check if the scheduled date is before the current date
+    if (scheduledDateTime.isBefore(DateTime(now.year, now.month, now.day))) {
+      scheduledDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        time.hour,
+        time.minute,
+      );
     }
-    _classController.clear();
 
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      id.toString(),
+      'channel_name',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
 
+    var platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+    );
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      hashValues(id, scheduledDateTime).hashCode,
+      // Generate a unique notification ID
+      'Assignment Reminder',
+      title,
+      tz.TZDateTime(
+        tz.local,
+        scheduledDateTime.year,
+        scheduledDateTime.month,
+        scheduledDateTime.day,
+        scheduledDateTime.hour,
+        scheduledDateTime.minute,
+      ),
+      platformChannelSpecifics,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation
+          .absoluteTime,
+      androidAllowWhileIdle: true,
+    );
   }
 
-  void _renameClass(int index) async {
-    final _classController = TextEditingController();
+
+
+
+  void _shuffleAssignments() {
+    setState(() {
+      _assignments.shuffle();
+    });
+    _saveAssignments();
+  }
+
+  void _addAssignment() async {
+    if (_assignments.length < 100) {
+      DateTime? selectedDate = await _selectDate(context);
+      if (selectedDate != null) {
+        TimeOfDay? selectedTime = await _selectTime(context);
+        if (selectedTime != null) {
+          setState(() {
+            Assignment newAssignment = Assignment(
+              title: _assignmentController.text,
+              date: selectedDate,
+              time: selectedTime,
+              selectedDate: selectedDate, // Store selected date
+              selectedTime: selectedTime, // Store selected time
+            );
+            int newIndex = _assignments.length;
+            _assignments.add(newAssignment);
+            _saveAssignments();
+            scheduleNotification(
+              newAssignment.id,
+              newAssignment.title,
+              newAssignment.selectedDate, // Use selected date
+              newAssignment.selectedTime, // Use selected time
+            );
+          });
+
+          _assignmentController.clear();
+        }
+      }
+    }
+  }
+
+
+
+
+
+  void _renameAssignment(int index) async {
+    final _assignmentController = TextEditingController();
 
     String newName = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Rename Class"),
+        title: Text("Rename Assignment"),
         content: TextField(
-          controller: _classController,
+          controller: _assignmentController,
           autofocus: true,
           decoration: InputDecoration(hintText: 'Enter New Name'),
         ),
         actions: [
           TextButton(
             child: Text("Rename"),
-            onPressed: () => Navigator.of(context).pop(_classController.text),
+            onPressed: () =>
+                Navigator.of(context).pop(_assignmentController.text),
           ),
           TextButton(
             child: Text("Cancel"),
@@ -150,37 +244,87 @@ class _HomePageState extends State<HomePage> {
 
     if (newName != null) {
       setState(() {
-        _classes1[index] = newName;
+        _assignments[index].title = newName;
       });
-      _saveclasses1();
+      _saveAssignments();
+
+      // Reschedule notification with updated assignment details
+      scheduleNotification(
+        _assignments[index].id,
+        _assignments[index].title,
+        _assignments[index].selectedDate, // Use selected date
+        _assignments[index].selectedTime, // Use selected time
+      );
     }
   }
 
-  void _deleteClass(int index) {
+
+
+  void _deleteAssignment(int index) {
     setState(() {
-      _classes1.removeAt(index);
+      _assignments.removeAt(index);
     });
-    _saveclasses1();
+    _saveAssignments();
   }
 
-  void _saveclasses1() async {
+  void _saveAssignments() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList("classes1", _classes1);
+    List<String> savedAssignments = _assignments
+        .map((assignment) =>
+    '${assignment.id},${assignment.title},${assignment.date.millisecondsSinceEpoch},${assignment.time.hour},${assignment.time.minute},${assignment.selectedDate.millisecondsSinceEpoch},${assignment.selectedTime.hour},${assignment.selectedTime.minute}')
+        .toList();
+    prefs.setStringList("assignments", savedAssignments);
   }
 
-  void _loadclasses1() async {
+
+  void _loadAssignments() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> savedclasses1 = prefs.getStringList("classes1") ?? [];
+    List<String> savedAssignments = prefs.getStringList("assignments") ?? [];
+
     setState(() {
-      _classes1 = savedclasses1;
+      _assignments = savedAssignments
+          .map((savedAssignment) {
+        List<String> parts = savedAssignment.split(',');
+        return Assignment(
+          id: parts[0],
+          title: parts[1],
+          date: DateTime.fromMillisecondsSinceEpoch(int.parse(parts[2])),
+          time: TimeOfDay(hour: int.parse(parts[3]), minute: int.parse(parts[4])),
+          selectedDate: DateTime.fromMillisecondsSinceEpoch(int.parse(parts[5])),
+          selectedTime: TimeOfDay(hour: int.parse(parts[6]), minute: int.parse(parts[7])),
+        );
+      })
+          .toList();
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadclasses1();
+
+  Future<DateTime?> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null && picked != _selectedDate)
+      setState(() {
+        _selectedDate = picked;
+      });
+    return picked;
   }
+
+  Future<TimeOfDay?> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+    );
+    if (picked != null && picked != _selectedTime)
+      setState(() {
+        _selectedTime = picked;
+      });
+    return picked;
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -191,7 +335,7 @@ class _HomePageState extends State<HomePage> {
           Container(
             padding: EdgeInsets.all(20),
             child: TextField(
-              controller: _classController,
+              controller: _assignmentController,
               decoration: InputDecoration(hintText: 'Enter Name of Assignment'),
             ),
           ),
@@ -202,44 +346,48 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 TextButton(
-                    child: Text(
-                      "Shuffle List".toUpperCase(),
-                      style: TextStyle(fontSize: 14),
+                  child: Text(
+                    "Shuffle List".toUpperCase(),
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  style: ButtonStyle(
+                    padding: MaterialStateProperty.all<EdgeInsets>(
+                      EdgeInsets.all(15),
                     ),
-                    style: ButtonStyle(
-                      padding: MaterialStateProperty.all<EdgeInsets>(
-                        EdgeInsets.all(15),
-                      ),
-                      foregroundColor: MaterialStateProperty.all<Color>(Colors.blueGrey),
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18.0),
-                          side: BorderSide(color: Colors.blueGrey),
-                        ),
+                    foregroundColor:
+                    MaterialStateProperty.all<Color>(Colors.blueGrey),
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18.0),
+                        side: BorderSide(color: Colors.blueGrey),
                       ),
                     ),
-                    onPressed: (_shuffleClasses)
+                  ),
+                  onPressed: _shuffleAssignments,
                 ),
                 SizedBox(width: 20),
                 TextButton(
-                    child: Text(
-                      "Add Assignment".toUpperCase(),
-                      style: TextStyle(fontSize: 14),
+                  child: Text(
+                    "Add Assignment".toUpperCase(),
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  style: ButtonStyle(
+                    padding: MaterialStateProperty.all<EdgeInsets>(
+                      EdgeInsets.all(15),
                     ),
-                    style: ButtonStyle(
-                      padding: MaterialStateProperty.all<EdgeInsets>(
-                        EdgeInsets.all(15),
-                      ),
-                      foregroundColor: MaterialStateProperty.all<Color>(Colors.blueGrey),
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18.0),
-                          side: BorderSide(color: Colors.blueGrey),
-                        ),
+                    foregroundColor:
+                    MaterialStateProperty.all<Color>(Colors.blueGrey),
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18.0),
+                        side: BorderSide(color: Colors.blueGrey),
                       ),
                     ),
-                    onPressed: (_addClass)
+                  ),
+                  onPressed: _addAssignment,
                 ),
+                SizedBox(width: 20),
+
               ],
             ),
           ),
@@ -248,12 +396,13 @@ class _HomePageState extends State<HomePage> {
             child: ReorderableListView.builder(
               shrinkWrap: true,
               scrollDirection: Axis.vertical,
-              itemCount: _classes1.length,
+              itemCount: _assignments.length,
               itemBuilder: (context, index) {
                 return ListTile(
                   key: Key('$index'), // Add a key to identify the ListTile
-                  title: Text(_classes1[index]),
-                  leading: Icon(Icons.book),
+                  title: Text(_assignments[index].title),
+                  subtitle: Text(_assignments[index].date.toString()),
+                  leading: Icon(Icons.assignment),
                   onTap: () {},
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -262,16 +411,36 @@ class _HomePageState extends State<HomePage> {
                         icon: Icon(Icons.delete),
                         onPressed: () {
                           setState(() {
-                            _deleteClass(index);
+                            _deleteAssignment(index);
                           });
                         },
                       ),
                       IconButton(
                         icon: Icon(Icons.edit),
                         onPressed: () {
-                          _renameClass(index);
+                          _renameAssignment(index);
                         },
                       ),
+                      IconButton(
+                        icon: Icon(Icons.notifications_active),
+                        onPressed: () async {
+                          DateTime? selectedDate = await _selectDate(context);
+                          if (selectedDate != null) {
+                            TimeOfDay? selectedTime = await _selectTime(context);
+                            if (selectedTime != null) {
+                              scheduleNotification(
+                                Uuid().v4(), // Generate a new UUID for each notification
+                                "Assignment Title", // Use an appropriate title here
+                                selectedDate,
+                                selectedTime,
+                              );
+                            }
+                          }
+                        },
+                      ),
+
+
+
                     ],
                   ),
                 );
@@ -281,8 +450,8 @@ class _HomePageState extends State<HomePage> {
                   if (newIndex > oldIndex) {
                     newIndex -= 1;
                   }
-                  final item = _classes1.removeAt(oldIndex);
-                  _classes1.insert(newIndex, item);
+                  final item = _assignments.removeAt(oldIndex);
+                  _assignments.insert(newIndex, item);
                 });
               },
             ),
