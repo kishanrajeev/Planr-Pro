@@ -120,7 +120,8 @@ class _HomePageState extends State<HomePage> {
       ) async {
     print("Scheduling notification for: $title at $date $time");
 
-    DateTime scheduledDateTime = DateTime(
+    DateTime scheduledDateTime = tz.TZDateTime(
+      tz.local,
       date.year,
       date.month,
       date.day,
@@ -152,6 +153,8 @@ class _HomePageState extends State<HomePage> {
     var platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
     );
+
+    // Convert selected date/time to local timezone
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       hashValues(id, scheduledDateTime).hashCode,
@@ -302,28 +305,38 @@ class _HomePageState extends State<HomePage> {
 
 
   Future<DateTime?> _selectDate(BuildContext context) async {
+    tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime dt = tz.TZDateTime(tz.local, now.year, now.month, now.day);
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2000),
+      initialDate: dt,
+      firstDate: dt,
       lastDate: DateTime(2100),
     );
-    if (picked != null && picked != _selectedDate)
+
+    if (picked != null && picked != dt) {
       setState(() {
         _selectedDate = picked;
       });
+    }
+
     return picked;
   }
 
   Future<TimeOfDay?> _selectTime(BuildContext context) async {
+
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: _selectedTime,
+      initialTime: TimeOfDay.fromDateTime(tz.TZDateTime.now(tz.local)),
     );
-    if (picked != null && picked != _selectedTime)
+
+    if (picked != null && picked != _selectedTime) {
       setState(() {
         _selectedTime = picked;
       });
+    }
+
     return picked;
   }
 
